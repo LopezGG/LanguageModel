@@ -11,8 +11,10 @@ namespace LogProbLM
     {
         static void Main(string[] args)
         {
-            string CountFile = @"C:\compling570\hw5_dir\examples\ngram_count_file";
-            string LMFile = @"C:\compling570\hw5_dir\examples\lm_file";
+            if (args.Length < 2)
+                throw new Exception("Incorrect Argument length");
+            string CountFile = args[0];
+            string LMFile = args[1];
             string line;
 
             Ngram unigram = new Ngram();

@@ -11,20 +11,31 @@ namespace Perplexity
     {
         static void Main(string[] args)
         {
-            string LMFile = @"C:\compling570\hw5_dir\examples\lm_file";
-            double lambda1 = 0.33;
-            double lambda2 = 0.33;
-            double lambda3 = 0.33;
-            string inputFile = @"C:\compling570\hw5_dir\examples\test_data_ex";
-            string outputFile = @"C:\compling570\hw5_dir\examples\ppl_file";
+            string LMFile ;
+            double lambda1 ;
+            double lambda2 ;
+            double lambda3 ;
+            string TestFile ;
+            string outputFile ;
+            if (args.Length < 6)
+                throw new Exception("Incorrect number of arguments");
+            LMFile = args[0];
+            lambda1 = Convert.ToDouble(args[1]);
+            lambda2 = Convert.ToDouble(args[2]);
+            lambda3 = Convert.ToDouble(args[3]);
+            TestFile = args[4];
+            outputFile = args[5];
+
             Dictionary<String, double> GramDict = new Dictionary<string, double>();
             CreateDictionary(LMFile, GramDict);
             string line;
             StreamWriter Sw = new StreamWriter(outputFile);
             int sentenceCount=0;
-            double totalPpl=0, totalLogprob=0,totalProb=0;
+            double totalPpl=0, OverAllSum=0,totalProb=0;
+            int totalwords=0,totalOOV=0;
+            string output;
             string header;
-            using (StreamReader Sr = new StreamReader(inputFile))
+            using (StreamReader Sr = new StreamReader(TestFile))
             {
                 while ((line = Sr.ReadLine()) != null)
                 {
@@ -36,8 +47,9 @@ namespace Perplexity
                     Sw.WriteLine(header);
                     string[] words = line.Split(default(string[]), StringSplitOptions.RemoveEmptyEntries);
                     string temp2,temp3;
-                    double uniProb, biProb, triProb,totalWordProb,ppl;
-                    string output;
+                    double uniProb, biProb, triProb, totalWordProb, ppl;
+                    
+                    
                     double sum = 0;
                     int cnt = 0;
                     int oov = 0;
@@ -97,6 +109,7 @@ namespace Perplexity
                             }
                             totalWordProb = (lambda3 * triProb) + (lambda2 * biProb) + (lambda1 * uniProb);
                             totalWordProb = (totalWordProb > 0) ? Math.Log10(totalWordProb) : 0;
+
                             sum += totalWordProb;
                             cnt++;
                             if (triProb > 0)
@@ -110,12 +123,14 @@ namespace Perplexity
                     }
                     --cnt;
                     output = String.Format("1 sentence, {0} words, {1} OOVs",cnt,oov);
-                    Sw.WriteLine(output);
+                    Sw.WriteLine(output);           
                     //TODO:check this logic plus 1 to include the last </s>
                     int actualWords =(cnt-oov+1);
                     totalProb = (sum * (-1)) / actualWords;
                     //for final calc
-                    totalLogprob += totalProb;
+                    OverAllSum += sum;
+                    totalOOV += oov;
+                    totalwords += cnt;
                     ppl = Math.Pow(10, totalProb);
                     //for final calc
                     totalPpl += ppl;
@@ -126,6 +141,12 @@ namespace Perplexity
                     Sw.WriteLine();
                 }
             }
+            Sw.WriteLine("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+            output = String.Format("sent_num={0} word_num={1} oov_num={2}",sentenceCount,totalwords,totalOOV);
+            Sw.WriteLine(output);
+            double OverAllTotalProb = (OverAllSum * -1 / (totalwords - totalOOV + sentenceCount));
+            output = String.Format("lgprob={0} ave_lgprob={1} ppl={2}", OverAllSum, OverAllSum / (totalwords - totalOOV + sentenceCount), Math.Pow(10, OverAllTotalProb));
+            Sw.WriteLine(output);
             Sw.Close();
 
 
@@ -140,7 +161,9 @@ namespace Perplexity
                 {
                     if (String.IsNullOrWhiteSpace(line))
                         continue;
-                    else if (line.Contains("data") || line.Contains(@"gram") || line.Contains(@"end"))
+                    else if (line.Contains(@"\data\") || line.Contains(@"\1-grams:") || line.Contains(@"\end\")
+                        || line.Contains(@"\2-grams:") || line.Contains(@"\3-grams:") || line.Contains(@"ngram 1:")
+                        || line.Contains(@"ngram 2:") || line.Contains(@"ngram 3:"))
                         continue;
                     string[] words = line.Split(default(string[]), StringSplitOptions.RemoveEmptyEntries);
                     prob = Convert.ToDouble(words[1]);

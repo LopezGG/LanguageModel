@@ -13,8 +13,11 @@ namespace languageModel
         {
 
             Dictionary<String, int> Unigram, Bigram, Trigram;
-            string TrainingPath = @"C:\compling570\hw5_dir\examples\training_data_ex";
-            string OutputPath = @"C:\compling570\hw5_dir\examples\ngram_count_file";
+            if (args.Length < 2)
+                throw new Exception("Incorrect Argument length");
+
+            string TrainingPath=args[0];
+            string OutputPath = args[1];
             createDictionaries(TrainingPath, out Unigram, out Bigram,out Trigram);
             if (File.Exists(OutputPath))
             {
@@ -23,7 +26,6 @@ namespace languageModel
             WriteDict(Unigram, OutputPath);
             WriteDict(Bigram, OutputPath);
             WriteDict(Trigram, OutputPath);
-            Console.ReadLine();
         }
         public static void WriteDict(Dictionary<String, int> Dict, String OutputPath)
         {
